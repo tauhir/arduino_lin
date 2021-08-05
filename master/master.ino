@@ -6,7 +6,7 @@ lin_stack LIN1(1);
 void setup() {
   // Nothing to do here.
 }
-
+//0x85 0x11 0x255 0x255 checksum
 void loop() {
   // Create Data Package
   byte packageON[] = {255, 255}; // LEDs ON
