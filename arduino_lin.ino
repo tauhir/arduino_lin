@@ -29,7 +29,7 @@ lin_stack LIN1(1); // 1 - channel, ident - Identification Byte
 
 void setup() {
   // Configure Serial communication
-  Serial.begin(9600); // Configure Serial for Serial Monitor
+  Serial.begin(19200); // Configure Serial for Serial Monitor
   Serial.println("Starting!");
   LIN1.setSerial(); // Configure Serial for receiving
 }

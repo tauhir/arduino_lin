@@ -23,7 +23,10 @@ class lin_stack
 		lin_stack(byte Ch, byte ident); // Constructor for Slave Node
 		
 		// Methods
-		
+		int rx_one = 10;
+		int tx_one = 11;
+		int rx_two = 12;
+		int tx_two = 13;
 		// Writing data to bus
 		int write(byte add, byte data[], byte data_size); // write whole package
 		int writeRequest(byte add); // Write header only
@@ -38,8 +41,6 @@ class lin_stack
 	private:
 		const unsigned long bound_rate = 19200; // 10417 is best for LIN Interface, most device should work
 		const unsigned int period = 52; // in microseconds, 1s/10417
-		SoftwareSerial LINBusSerialOne(10, 11);
-		SoftwareSerial LINBusSerialTwo(12, 13);
 		byte ch = 0; // which channel should be used
 		byte identByte; // user defined Identification Byte
 		int sleep(byte sleep_state); // method for controlling transceiver modes (0 - sleep, 1 - normal)

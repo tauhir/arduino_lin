@@ -52,9 +52,9 @@ int lin_stack::write(byte ident, byte data[], byte data_size){
 	//suma = suma + 1;
 	byte checksum = 255 - suma;
 	// Start interface
-	//sleep(1); // Go to Normal mode
+	sleep(1); // Go to Normal mode
 	// Synch Break
-	//serial_pause(13);
+	serial_pause(13);
 	// Send data via Serial interface
 	if(ch==1){ // For LIN1 or LINBusSerialOne
 		LINBusSerialOne.begin(bound_rate); // config Serial
@@ -71,74 +71,74 @@ int lin_stack::write(byte ident, byte data[], byte data_size){
 		LINBusSerialTwo.write(checksum);// write Checksum Byte to serial
 		LINBusSerialTwo.end(); // clear Serial config
 	}
-	//sleep(0); // Go to Sleep mode
+	sleep(0); // Go to Sleep mode
 	return 1;
 }
 
-// int lin_stack::writeRequest(byte ident){
-// 	// Create Header
-// 	byte identByte = (ident&0x3f) | calcIdentParity(ident);
-// 	byte header[2]= {0x55, identByte};
-// 	// Start interface
-// 	sleep(1); // Go to Normal mode
-// 	// Synch Break
-// 	serial_pause(13);
-// 	// Send data via Serial interface
-// 	if(ch==1){ // For LIN1 or LINBusSerialOne
-// 		LINBusSerialOne.begin(bound_rate); // config Serial
-// 		LINBusSerialOne.write(header,2); // write data to serial
-// 		LINBusSerialOne.end(); // clear Serial config
-// 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-// 		LINBusSerialTwo.begin(bound_rate); // config Serial
-// 		LINBusSerialTwo.write(header,2); // write data to serial
-// 		LINBusSerialTwo.end(); // clear Serial config
-// 	}
-// 	sleep(0); // Go to Sleep mode
-// 	return 1;
-// }
+int lin_stack::writeRequest(byte ident){
+	// Create Header
+	byte identByte = (ident&0x3f) | calcIdentParity(ident);
+	byte header[2]= {0x55, identByte};
+	// Start interface
+	sleep(1); // Go to Normal mode
+	// Synch Break
+	serial_pause(13);
+	// Send data via Serial interface
+	if(ch==1){ // For LIN1 or LINBusSerialOne
+		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.write(header,2); // write data to serial
+		LINBusSerialOne.end(); // clear Serial config
+	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.write(header,2); // write data to serial
+		LINBusSerialTwo.end(); // clear Serial config
+	}
+	sleep(0); // Go to Sleep mode
+	return 1;
+}
 
-// int lin_stack::writeResponse(byte data[], byte data_size){
-// 	// Calculate checksum
-// 	byte suma = 0;
-// 	for(int i=0;i<data_size;i++) suma = suma + data[i];
-// 	//suma = suma + 1;
-// 	byte checksum = 255 - suma;
-// 	// Start interface
-// 	sleep(1); // Go to Normal mode
-// 	// Send data via Serial interface
-// 	if(ch==1){ // For LIN1 or LINBusSerialOne
-// 		LINBusSerialOne.begin(bound_rate); // config Serial
-// 		LINBusSerialOne.write(data, data_size); // write data to serial
-// 		LINBusSerialOne.write(checksum); // write data to serial
-// 		LINBusSerialOne.end(); // clear Serial config
-// 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-// 		LINBusSerialTwo.begin(bound_rate); // config Serial
-// 		LINBusSerialTwo.write(data, data_size); // write data to serial
-// 		LINBusSerialTwo.write(checksum); // write data to serial
-// 		LINBusSerialTwo.end(); // clear Serial config
-// 	}
-// 	sleep(0); // Go to Sleep mode
-// 	return 1;
-// }
+int lin_stack::writeResponse(byte data[], byte data_size){
+	// Calculate checksum
+	byte suma = 0;
+	for(int i=0;i<data_size;i++) suma = suma + data[i];
+	//suma = suma + 1;
+	byte checksum = 255 - suma;
+	// Start interface
+	sleep(1); // Go to Normal mode
+	// Send data via Serial interface
+	if(ch==1){ // For LIN1 or LINBusSerialOne
+		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.write(data, data_size); // write data to serial
+		LINBusSerialOne.write(checksum); // write data to serial
+		LINBusSerialOne.end(); // clear Serial config
+	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.write(data, data_size); // write data to serial
+		LINBusSerialTwo.write(checksum); // write data to serial
+		LINBusSerialTwo.end(); // clear Serial config
+	}
+	sleep(0); // Go to Sleep mode
+	return 1;
+}
 
-// int lin_stack::writeStream(byte data[], byte data_size){
-// 	// Start interface
-// 	sleep(1); // Go to Normal mode
-// 	// Synch Break
-// 	serial_pause(13);
-// 	// Send data via Serial interface
-// 	if(ch==1){ // For LIN1 or LINBusSerialOne
-// 		LINBusSerialOne.begin(bound_rate); // config Serial
-// 		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]);
-// 		LINBusSerialOne.end(); // clear Serial config
-// 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-// 		LINBusSerialTwo.begin(bound_rate); // config Serial
-// 		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]);
-// 		LINBusSerialTwo.end(); // clear Serial config
-// 	}
-// 	sleep(0); // Go to Sleep mode
-// 	return 1;
-// }
+int lin_stack::writeStream(byte data[], byte data_size){
+	// Start interface
+	sleep(1); // Go to Normal mode
+	// Synch Break
+	serial_pause(13);
+	// Send data via Serial interface
+	if(ch==1){ // For LIN1 or LINBusSerialOne
+		LINBusSerialOne.begin(bound_rate); // config Serial
+		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]);
+		LINBusSerialOne.end(); // clear Serial config
+	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+		LINBusSerialTwo.begin(bound_rate); // config Serial
+		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]);
+		LINBusSerialTwo.end(); // clear Serial config
+	}
+	sleep(0); // Go to Sleep mode
+	return 1;
+}
 
 // READ methods
 // Read LIN traffic and then proces it.
@@ -221,20 +221,28 @@ int lin_stack::read(byte data[], byte data_size, boolean all_data = false, boole
 
 
 // PRIVATE METHODS
-int lin_stack::serial_pause(int no_bits){
-	// Calculate delay needed for 13 bits, depends on bound rate
-	//baud rate is bits per second so we need to determine how many ms needed for 13 bits
-	// 1000000 milliseconds/ boud_rate gives us bits per millisecond
-	unsigned int time_in_micro_sec =(1000000/bound_rate)*no_bits;
-	if (time_in_micro_sec > 16383) {
-		return -1;
-	}
-	else {
-		delayMicroseconds(time_in_micro_sec);
-		return 1;
-	}
-	return 1;
-}
+// int lin_stack::serial_pause(int no_bits){
+// 	// Calculate delay needed for 13 bits, depends on bound rate
+// 	unsigned int del = period*no_bits; // delay for number of bits (no-bits) in microseconds, depends on period
+// 	if(ch==2){
+// 		PIOA->PIO_PER = PIO_PA13; // enable PIO register
+// 		PIOA->PIO_OER = PIO_PA13; // enable PA13 as output
+// 		PIOA->PIO_CODR = PIO_PA13; // clear PA13
+// 		delayMicroseconds(del); // delay
+// 		PIOA->PIO_SODR = PIO_PA13; // set pin high
+// 		PIOA->PIO_ODR = PIO_PA13; // enable PA13 as output
+// 		PIOA->PIO_PDR = PIO_PA13; // clear configuration for PIO, needs to be done because Serial wont work with it
+// 	}else if(ch==1){
+// 		PIOA->PIO_PER = PIO_PA11; // enable PIO register
+// 		PIOA->PIO_OER = PIO_PA11; // enable PA11 as output
+// 		PIOA->PIO_CODR = PIO_PA11; // clear PA11
+// 		delayMicroseconds(del); // delay
+// 		PIOA->PIO_SODR = PIO_PA11; // set pin high
+// 		PIOA->PIO_ODR = PIO_PA11; // enable PA13 as output
+// 		PIOA->PIO_PDR = PIO_PA11; // clear configuration for PIO, needs to be done because Serial wont work with it
+// 	}
+// 	return 1;
+// }
 
 // int lin_stack::sleep(byte sleep_state){
 // 	if(sleep_state==1){ // Go to Normal mode
