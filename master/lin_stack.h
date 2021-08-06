@@ -32,7 +32,7 @@ class lin_stack
 		int writeRequest(byte add); // Write header only
 		int writeResponse(byte data[], byte data_size); // Write response only
 		int writeStream(byte data[], byte data_size); // Writing user data to LIN bus
-		int read(int data[], int data_size,boolean all_data, boolean id_specific); // read data from LIN bus, checksum and ident validation
+		int read(byte data[], byte data_size,boolean all_data, boolean id_specific); // read data from LIN bus, checksum and ident validation
 		int readStream(byte data[],byte data_size); // read data from LIN bus
 		int setSerial(); // set up Seril communication for receiving data.
 		int busWakeUp(); // send wakeup frame for waking up all bus participants

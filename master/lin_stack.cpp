@@ -7,11 +7,6 @@
  *  
  *  Author: Tauhir Edwards
  *  Arduino IDE 1.6.9
- * 
- * Notes:
- * I've decided to work with ints instead of bytes except when writing and possibly showing the values on a serial port. 
- * The reason for this is to handle varying data types
- * 
 */ 
 
 /* LIN PACKET:
@@ -155,67 +150,52 @@ int lin_stack::setSerial(){ // Only needed when receiving signals
 	}
 }
 
-int lin_stack::read(byte data[], int data_size, boolean all_data = false, boolean id_specific = true){
+int lin_stack::read(byte data[], byte data_size, boolean all_data = false, boolean id_specific = true){
 	// added all_data to instead of just providing data, send back all values (sync, id, checksum etc)
 	// id_specific when false will read everything and not check parity.
-	// for now, data_size should just be 8
-	int rec[data_size+3]; //byte array of data+sync+id+checksum
-	int counter = 0;
+	byte rec[data_size+3]; //byte array of data+sync+id+checksum
 	if(ch==1){ // For LIN1 or LINBusSerialOne
-		while( (LINBusSerialOne.available() > 0) & (counter < 7) {
-			if (int(LINBusSerialOne.peek()) == 85) {
-				//instead of getting data from the serial buffer, write a negative value 
-				for (int i = counter;i<7;i++){
-					rec[i]= -1;
-				}
-				counter = 7;
-			}
-			else {
-				rec[counter] = LINBusSerialOne.read();
-			}
+		if(LINBusSerialOne.read() != -1){ // Check if there is an event on LIN bus
+			LINBusSerialOne.readBytes(rec,data_size+3);
 		}
 	}
 	else if(ch==2){ // For LIN2 or LINBusSerialTwo
-		while( (LINBusSerialTwo.available() > 0) & (counter < 7) {
-			if (int(LINBusSerialTwo.peek()) == 85) {
-				//instead of getting data from the serial buffer, write a negative value 
-				for (int i = counter;i<7;i++){
-					rec[i]= -1;
-				}
-				counter = 7;
-			}
-			else {
-				rec[counter] = LINBusSerialTwo.read();
-			}
+		if(LINBusSerialTwo.read() != -1){ // Check if there is an event on LIN bus
+			LINBusSerialTwo.readBytes(rec,data_size+3);
 		}
 	}
-	// now we have an array of size 11 at all times, with -1s at the end to be ignored TODO: instead use the id range to determine data size
+	if((id_specific==true)&(validateParity(rec[1]))&(validateChecksum(rec,data_size+3))){
 
-	//check if we've got the ID we're after
-	// check if id is valid
-	// validate checksum 
-
-	if (rec[0] != 85) {
-		//first byte isn't sync byte - BAD DATA
+		if (all_data) {
+			data = rec;
+		}
+		else {
+			for(int j=0;j<data_size;j++){
+				data[j] = rec[j+2];
+			}
+		}
+		return 1;
+	}
+	else if(rec[0] == rec[-1]){
 		return -1;
 	}
-	if (id_specific ==true) {
-		if (rec[1] != int(identByte) {
+	else if((id_specific == false) && (rec[0] != rec[-1])) {
+		if (all_data) {
+			data = rec;
+		}
+		else {
+			for(int j=0;j<data_size;j++){
+				data[j] = rec[j+2];
+			}
+		}
+		if (data[0]== data[-1]){
 			return 0;
 		}
-	}
-	if (all_data == true) {
-		data = rec;
 		return 1;
 	}
-	else { 
-		for(int j=0;j<data_size;j++){
-			data[j] = rec[j+2];
-		}
-		return 1;
-	}
-	
-	//if((id_specific==true)&(validateParity(rec[1]))&(validateChecksum(rec,data_size+3))){
+	else{
+		return -1;
+	}	
 	return 0;
 }
 
