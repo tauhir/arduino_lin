@@ -17,6 +17,9 @@ void loop() {
   byte packageOFF[] = {0, 0}; // LEDs OFF
   LIN1.write(0x11, packageOFF, 2);
   delay(5000);
+  byte packagecombo[]= {255,255,33,85,0x11,255,254}; // LEDs ON
+  LIN1.write(0x11, packagecombo, 7);
+  delay(5000);
 }
 
 //PURE TEST -- uncomment below

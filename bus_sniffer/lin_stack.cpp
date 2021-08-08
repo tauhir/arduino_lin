@@ -159,19 +159,38 @@ int lin_stack::read(int data[], int data_size, boolean all_data = false, boolean
 	// added all_data to instead of just providing data, send back all values (sync, id, checksum etc)
 	// id_specific when false will read everything and not check parity.
 	// for now, data_size should just be 8
-	int rec[data_size+3]; //byte array of data+sync+id+checksum
-	int counter = 0;
-	if(ch==1){ // For LIN1 or LINBusSerialOne
-		while( (LINBusSerialOne.available() > 0) & (counter < 7)) {
-			if (int(LINBusSerialOne.peek()) == 85) {
-				//instead of getting data from the serial buffer, write a negative value 
-				for (int i = counter;i<7;i++){
-					rec[i]= -1;
+	
+	//issue - what do we do if we connect and the first value is not a sync byte for some reason? I think ignoring current command and listening to the next is fine
+	int total_bytes = data_size+3;
+	int rec[]= {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}; //this should work for now
+	int counter = 0; 
+	int throw_away;
+	int peek= 0;
+	boolean sync_found = false;
+	if(ch==1){ // For LIN1 or LINBusSerialOne;
+		while( (LINBusSerialOne.available() > 0) & (counter < total_bytes)) {
+
+			peek = LINBusSerialOne.peek();
+			//Serial.println(peek);
+			if (counter == 0){
+				if (peek == 85) {
+					rec[counter] = LINBusSerialOne.read();
+					sync_found = true;
+					Serial.println("sync_found");
+					counter++;
 				}
-				counter = 7;
+				else {
+					throw_away = LINBusSerialOne.read();
+				}	
+			}
+			else if (peek == 85) {
+				//instead of getting data from the serial buffer, write a negative value 
+				Serial.println("sync found twice");
+				counter = total_bytes;
 			}
 			else {
 				rec[counter] = LINBusSerialOne.read();
+				counter++;
 			}
 		}
 	}
@@ -194,27 +213,45 @@ int lin_stack::read(int data[], int data_size, boolean all_data = false, boolean
 	//check if we've got the ID we're after
 	// check if id is valid
 	// validate checksum 
-
 	if (rec[0] != 85) {
 		//first byte isn't sync byte - BAD DATA
+		
 		return -1;
 	}
-	if (id_specific ==true) {
+	else if(int(rec[1]) == int(rec[2])) {
+		Serial.println("probs here");
+		Serial.println(rec[1]);
+		for(int i=0; i <11;i++){
+			Serial.print(rec[i]);
+			Serial.print(", ");
+			}
+		Serial.println("Done");
+		return -1;
+	}
+	else if(id_specific ==true) {
 		if (rec[1] != int(identByte)) {
-			return 0;
+			return -2;
 		}
 	}
-	if (all_data == true) {
-		data = rec;
-		return 1;
-	}
-	else { 
-		for(int j=0;j<data_size;j++){
-			data[j] = rec[j+2];
+	else {
+		if (all_data == true) {
+			Serial.println("lin stack.cpp data:");
+			data = rec;
+			for(int i=0; i <11;i++){
+				Serial.print(rec[i]);
+				Serial.print(", ");
+				}
+			Serial.println("Done");
+			return 1;
 		}
-		return 1;
+		else { 
+			for(int j=0;j<data_size;j++){
+				data[j] = rec[j+2];
+				
+			}
+			return 1;
+		}
 	}
-	
 	//if((id_specific==true)&(validateParity(rec[1]))&(validateChecksum(rec,data_size+3))){
 	return 0;
 }
