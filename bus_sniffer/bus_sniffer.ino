@@ -20,8 +20,8 @@
 //rx, tx for lin 2: pin 12,13
 // Variables
 // const byte ident = 0x11; // Identification Byte
-byte data_size=4; // length of byte array
-byte data[4]; // byte array for received data
+int data_size=8; // length of byte array
+int data[8]; // byte array for received data
 
 
 // Creating LIN Object
@@ -36,7 +36,7 @@ void setup() {
 
 void loop() {
   // Checking LIN Bus periodicly
-  byte a = LIN1.read(data, data_size, true, false);
+  int a = LIN1.read(data, data_size, true, false);
   if(a == 1){ // If there was an event on LIN Bus, Traffic was detected. Print data to serial monitor
 
     Serial.println("Request Received!");
@@ -49,5 +49,9 @@ void loop() {
 			} 
   }else if(a == -1){ // Ident and Checksum validation Failed
     Serial.println("Corrupt Request Received!");
+  }
+  else if(a == -2){
+    // getting data but for the wrong ID
+     Serial.println("Specified ID enabled, data received but wrong ID!");
   }
 }
