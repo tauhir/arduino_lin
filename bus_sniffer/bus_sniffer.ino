@@ -20,8 +20,8 @@
 //rx, tx for lin 2: pin 12,13
 // Variables
 // const byte ident = 0x11; // Identification Byte
-int data_size = 8; // length of byte array
-int data[11]; // byte array for received data
+unsigned int data_size = 8; // length of byte array
+int data[]= {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}; // byte array for received data
 int int_array_size = sizeof(data[0]);
 
 
