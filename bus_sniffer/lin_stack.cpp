@@ -78,8 +78,81 @@ int lin_stack::write(byte ident, byte data[], byte data_size){
 	}
 	//sleep(0); // Go to Sleep mode
 	return 1;
+}int lin_stack::write(byte ident, byte data[], byte data_size){
+	// Calculate checksum
+	byte suma = 0;
+	for(int i=0;i<data_size;i++) 
+		suma = suma + data[i];
+	//suma = suma + 1;
+	byte checksum = 255 - suma;
+	// Start interface
+	//sleep(1); // Go to Normal mode
+	// Synch Break
+	//serial_pause(13);
+	// Send data via Serial interface
+	if(ch==1){ // For LIN1 or LINBusSerialOne
+		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.write(0x55); // write Synch Byte to serial
+		LINBusSerialOne.write(ident); // write Identification Byte to serial
+		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]); // write data to serial
+		LINBusSerialOne.write(checksum); // write Checksum Byte to serial
+		LINBusSerialOne.end(); // clear Serial config
+	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.write(0x55); // write Synch Byte to serial
+		LINBusSerialTwo.write(ident); // write Identification Byte to serialv
+		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]); // write data to serial
+		LINBusSerialTwo.write(checksum);// write Checksum Byte to serial
+		LINBusSerialTwo.end(); // clear Serial config
+	}
+	//sleep(0); // Go to Sleep mode
+	return 1;
+}int lin_stack::write(byte ident, byte data[], byte data_size){
+	// Calculate checksum
+	byte suma = 0;
+	for(int i=0;i<data_size;i++) 
+		suma = suma + data[i];
+	//suma = suma + 1;
+	byte checksum = 255 - suma;
+	// Start interface
+	//sleep(1); // Go to Normal mode
+	// Synch Break
+	//serial_pause(13);
+	// Send data via Serial interface
+	if(ch==1){ // For LIN1 or LINBusSerialOne
+		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.write(0x55); // write Synch Byte to serial
+		LINBusSerialOne.write(ident); // write Identification Byte to serial
+		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]); // write data to serial
+		LINBusSerialOne.write(checksum); // write Checksum Byte to serial
+		LINBusSerialOne.end(); // clear Serial config
+	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.write(0x55); // write Synch Byte to serial
+		LINBusSerialTwo.write(ident); // write Identification Byte to serialv
+		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]); // write data to serial
+		LINBusSerialTwo.write(checksum);// write Checksum Byte to serial
+		LINBusSerialTwo.end(); // clear Serial config
+	}
+	//sleep(0); // Go to Sleep mode
+	return 1;
 }
 
+int lin_stack::writeForced( byte data[], byte data_size){
+	// need this to emulate a slave 
+	if(ch==1){ // For LIN1 or LINBusSerialOne
+		LINBusSerialOne.begin(bound_rate); // config Serial
+		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]); // write data to serial
+		LINBusSerialOne.end(); // clear Serial config
+	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.write(data[0]);  // write Identification Byte to serialv
+		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]); // write data to serial
+		LINBusSerialTwo.end(); // clear Serial config
+	}
+	//sleep(0); // Go to Sleep mode
+	return 1;
+}
 int lin_stack::writeRequest(byte ident){
 	// Create Header
 	byte identByte = (ident&0x3f) | calcIdentParity(ident);
@@ -345,17 +418,20 @@ boolean lin_stack::validateParity(byte ident) {
 		return false;
 }
 
-boolean lin_stack::validateChecksum(unsigned char data[], byte data_size){
+boolean lin_stack::validateChecksum( int data[], byte data_size){
 	byte checksum = data[data_size-1];
 	byte suma = 0;
-	for(int i=2;i<data_size-1;i++) 
-		suma = suma + data[i];
+	for(int i=2;i<data_size-1;i++)
+		if (data[i] > 0) {
+			suma = suma + data[i];
+		} 
 	byte v_checksum = 255 - suma - 1;
 	if(checksum==v_checksum)
 		return true;
 	else
 		return false;
 } 
+
 
 // int lin_stack::busWakeUp()
 // {

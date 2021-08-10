@@ -47,7 +47,7 @@ class lin_stack
 		int sleep_config(byte serial_No); // configuration of sleep pins
 		int serial_pause(int no_bits); // for generating Synch Break
 		boolean validateParity(byte ident); // for validating Identification Byte, can be modified for validating parity
-		boolean validateChecksum(byte data[], byte data_size); // for validating Checksum Byte
+		boolean validateChecksum(int data[], byte data_size); // for validating Checksum Byte
 		byte calcIdentParity(byte ident);
 		
 };
