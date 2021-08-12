@@ -23,6 +23,7 @@
 unsigned int data_size = 8; // length of byte array
 int data[]= {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}; // byte array for received data
 int int_array_size = sizeof(data[0]);
+int checklist[] = {613,357,736,645};
 
 
 // Creating LIN Object
@@ -40,12 +41,44 @@ void loop() {
   int a = LIN1.read(data, data_size, true, false);
   if(a == 1){ // If there was an event on LIN Bus, Traffic was detected. Print data to serial monitor
 
+    for(int i=0; i <11;i++){
+      if (data[i] != -1){
+        Serial.print(data[i]);
+        if(i < (10)) {
+            Serial.print(", ");
+        }
+      }
+		}
+    Serial.println(" ");
+
+    //code below tests that master_test.ino produces the correct results when sniffing
+    // int value = 0;
+    // boolean result = false;
     // for(int i=0; i <11;i++){
-		// 	Serial.print(data[i]);
-    //     if(i < (sizeof(data)-1)) {
-    //         Serial.print(", ");
+    //   if (data[i] != -1){
+    //     value = value + data[i];
+    //   }
+		// }
+    // for (int x=0; x<4; x++){
+    // if (checklist[x] == value){
+    //     result = true;
+    //   }
+    // }
+    // if (result==false){
+    //   Serial.println("false");
+    //   for(int i=0; i <11;i++){
+    //     if (data[i] != -1){
+    //       Serial.print(data[i]);
+    //       if(i < (10)) {
+    //           Serial.print(", ");
+    //       }
     //     }
-		// 	}
+    //   }
+    //   Serial.println(" ");
+    // }
+    // else {
+    //   Serial.println("true");
+    // }
   }
   else if(a == -1){ // Ident and Checksum validation Failed
     //Serial.println("Corrupt Request Received!");

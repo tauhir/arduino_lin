@@ -7,6 +7,11 @@
  *  
  *  Author: Tauhir Edwards
  *  Arduino IDE 1.6.9
+ * 
+ * Notes:
+ * I've decided to work with ints instead of bytes except when writing and possibly showing the values on a serial port. 
+ * The reason for this is to handle varying data types
+ * 
 */ 
 
 /* LIN PACKET:
@@ -75,51 +80,66 @@ int lin_stack::write(byte ident, byte data[], byte data_size){
 	return 1;
 }
 
-// int lin_stack::writeRequest(byte ident){
-// 	// Create Header
-// 	byte identByte = (ident&0x3f) | calcIdentParity(ident);
-// 	byte header[2]= {0x55, identByte};
-// 	// Start interface
-// 	sleep(1); // Go to Normal mode
-// 	// Synch Break
-// 	serial_pause(13);
-// 	// Send data via Serial interface
-// 	if(ch==1){ // For LIN1 or LINBusSerialOne
-// 		LINBusSerialOne.begin(bound_rate); // config Serial
-// 		LINBusSerialOne.write(header,2); // write data to serial
-// 		LINBusSerialOne.end(); // clear Serial config
-// 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-// 		LINBusSerialTwo.begin(bound_rate); // config Serial
-// 		LINBusSerialTwo.write(header,2); // write data to serial
-// 		LINBusSerialTwo.end(); // clear Serial config
-// 	}
-// 	sleep(0); // Go to Sleep mode
-// 	return 1;
-// }
+int lin_stack::writeForced( byte data[], byte data_size){
+	// need this to emulate a slave 
+	if(ch==1){ // For LIN1 or LINBusSerialOne
+		LINBusSerialOne.begin(bound_rate); // config Serial
+		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]); // write data to serial
+		LINBusSerialOne.end(); // clear Serial config
+	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.write(data[0]);  // write Identification Byte to serialv
+		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]); // write data to serial
+		LINBusSerialTwo.end(); // clear Serial config
+	}
+	//sleep(0); // Go to Sleep mode
+	return 1;
+}
+int lin_stack::writeRequest(byte ident){
+	// Create Header
+	byte identByte = (ident&0x3f) | calcIdentParity(ident);
+	byte header[2]= {0x55, identByte};
+	// Start interface
+	sleep(1); // Go to Normal mode
+	// Synch Break
+	serial_pause(13);
+	// Send data via Serial interface
+	if(ch==1){ // For LIN1 or LINBusSerialOne
+		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.write(header,2); // write data to serial
+		LINBusSerialOne.end(); // clear Serial config
+	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.write(header,2); // write data to serial
+		LINBusSerialTwo.end(); // clear Serial config
+	}
+	sleep(0); // Go to Sleep mode
+	return 1;
+}
 
-// int lin_stack::writeResponse(byte data[], byte data_size){
-// 	// Calculate checksum
-// 	byte suma = 0;
-// 	for(int i=0;i<data_size;i++) suma = suma + data[i];
-// 	//suma = suma + 1;
-// 	byte checksum = 255 - suma;
-// 	// Start interface
-// 	sleep(1); // Go to Normal mode
-// 	// Send data via Serial interface
-// 	if(ch==1){ // For LIN1 or LINBusSerialOne
-// 		LINBusSerialOne.begin(bound_rate); // config Serial
-// 		LINBusSerialOne.write(data, data_size); // write data to serial
-// 		LINBusSerialOne.write(checksum); // write data to serial
-// 		LINBusSerialOne.end(); // clear Serial config
-// 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-// 		LINBusSerialTwo.begin(bound_rate); // config Serial
-// 		LINBusSerialTwo.write(data, data_size); // write data to serial
-// 		LINBusSerialTwo.write(checksum); // write data to serial
-// 		LINBusSerialTwo.end(); // clear Serial config
-// 	}
-// 	sleep(0); // Go to Sleep mode
-// 	return 1;
-// }
+int lin_stack::writeResponse(byte data[], byte data_size){
+	// Calculate checksum
+	byte suma = 0;
+	for(int i=0;i<data_size;i++) suma = suma + data[i];
+	//suma = suma + 1;
+	byte checksum = 255 - suma;
+	// Start interface
+	sleep(1); // Go to Normal mode
+	// Send data via Serial interface
+	if(ch==1){ // For LIN1 or LINBusSerialOne
+		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.write(data, data_size); // write data to serial
+		LINBusSerialOne.write(checksum); // write data to serial
+		LINBusSerialOne.end(); // clear Serial config
+	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.write(data, data_size); // write data to serial
+		LINBusSerialTwo.write(checksum); // write data to serial
+		LINBusSerialTwo.end(); // clear Serial config
+	}
+	sleep(0); // Go to Sleep mode
+	return 1;
+}
 
 // int lin_stack::writeStream(byte data[], byte data_size){
 // 	// Start interface
@@ -143,6 +163,7 @@ int lin_stack::write(byte ident, byte data[], byte data_size){
 // READ methods
 // Read LIN traffic and then proces it.
 int lin_stack::setSerial(){ // Only needed when receiving signals
+	Serial.begin(19200);
 	if(ch==1){ // For LIN1 (Channel 1)
 		LINBusSerialOne.begin(bound_rate); // Configure LINBusSerialOne
 	} else if(ch==2){ // For LIN2 (Channel 2)
@@ -150,56 +171,109 @@ int lin_stack::setSerial(){ // Only needed when receiving signals
 	}
 }
 
-int lin_stack::read(byte data[], byte data_size, boolean all_data = false, boolean id_specific = true){
+int lin_stack::read(int data[], int data_size, boolean all_data = true, boolean id_specific = true){
 	// added all_data to instead of just providing data, send back all values (sync, id, checksum etc)
 	// id_specific when false will read everything and not check parity.
-	byte rec[data_size+3]; //byte array of data+sync+id+checksum
-	if(ch==1){ // For LIN1 or LINBusSerialOne
-		if(LINBusSerialOne.read() != -1){ // Check if there is an event on LIN bus
-			LINBusSerialOne.readBytes(rec,data_size+3);
-		}
-	}
-	else if(ch==2){ // For LIN2 or LINBusSerialTwo
-		if(LINBusSerialTwo.read() != -1){ // Check if there is an event on LIN bus
-			LINBusSerialTwo.readBytes(rec,data_size+3);
-		}
-	}
-	if((id_specific==true)&(validateParity(rec[1]))&(validateChecksum(rec,data_size+3))){
+	// for now, data_size should just be 8
+	
+	//issue - what do we do if we connect and the first value is not a sync byte for some reason? I think ignoring current command and listening to the next is fine
+	int total_bytes = data_size+3;
+	int rec[]= {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}; //this should work for now
+	unsigned int counter = 0; 
+	int throw_away = 0;
+	int peek= 0;
+	String h = "";
+	boolean sync_found = false;
+	if(ch==1){ // For LIN1 or LINBusSerialOne;
+		while( (LINBusSerialOne.available() > 0) & (counter < total_bytes)) {
 
-		if (all_data) {
-			data = rec;
-		}
-		else {
-			for(int j=0;j<data_size;j++){
-				data[j] = rec[j+2];
+			peek = LINBusSerialOne.peek();
+			//Serial.println(peek);
+			if (counter == 0){
+				if (peek == 85) {
+					rec[counter] = LINBusSerialOne.read();
+					sync_found = true;
+					counter++;
+				}
+				else {
+					throw_away = LINBusSerialOne.read();
+				}	
 			}
+			else if (peek == 85) {
+				//instead of getting data from the serial buffer, write a negative value 
+				counter = total_bytes;
+			}
+			else {
+				rec[counter] = LINBusSerialOne.read();
+				counter++;
+			}
+		}
+	}
+	// else if(ch==2){ // For LIN2 or LINBusSerialTwo
+	// 	while( (LINBusSerialTwo.available() > 0) & (counter < 7)) {
+	// 		if (int(LINBusSerialTwo.peek()) == 85) {
+	// 			//instead of getting data from the serial buffer, write a negative value 
+	// 			for (int i = counter;i<7;i++){
+	// 				rec[i]= -1;
+	// 			}
+	// 			counter = 7;
+	// 		}
+	// 		else {
+	// 			rec[counter] = LINBusSerialTwo.read();
+	// 		}
+	// 	}
+	// }
+	// now we have an array of size 11 at all times, with -1s at the end to be ignored TODO: instead use the id range to determine data size
+
+	//check if we've got the ID we're after
+	// check if id is valid
+	// validate checksum 
+	h = " ";
+    delay(15); //seems like i need to wait for the buffer to fill:
+				// at 9200bps, thats 0.1ms per bit. LIN message has 101 bits max with 40% waiting time (at the very max) ~ 15ms for a LIN message and delay from slave
+
+	if (rec[0] != 85) {
+		//first byte isn't sync byte - BAD DATA
+		
+		return -1;
+	}
+	
+	if(int(rec[2]) == -1) {
+		return -1;
+	}
+	if(id_specific ==true) {
+		if (rec[1] != int(identByte)) {
+			return -2;
+		}
+	}
+	if (all_data == true) {
+		//maybe work with data the whole time and save some time
+		for(int i=0; i <11;i++){
+			data[i]=rec[i];
+			}
+		return 1;
+	}
+	else { 
+		for(int j=0;j<data_size;j++){
+			data[j] = rec[j+2];
+			
 		}
 		return 1;
 	}
-	else if(rec[0] == rec[-1]){
-		return -1;
-	}
-	else if((id_specific == false) && (rec[0] != rec[-1])) {
-		if (all_data) {
-			data = rec;
-		}
-		else {
-			for(int j=0;j<data_size;j++){
-				data[j] = rec[j+2];
-			}
-		}
-		if (data[0]== data[-1]){
-			return 0;
-		}
-		return 1;
-	}
-	else{
-		return -1;
-	}	
+
+	//if((id_specific==true)&(validateParity(rec[1]))&(validateChecksum(rec,data_size+3))){
 	return 0;
 }
 
+//not going to use this.
 // int lin_stack::readStream(byte data[],byte data_size){
+// 	// how was this different to read?
+// 	byte rec[data_size];
+// 	if(ch==1){ // For LIN1 or LINBusSerialOne
+// 		if(LINBusSerialOne.read() != -1){ // Check if there is an event on LIN bus
+// 			LINBusSerialOne.readBytes(rec,data_size);
+// 			for(int j=0;j<data_size;j++){
+// 				data[j] = rec[j];int lin_stack::readStream(byte data[],byte data_size){
 // 	// how was this different to read?
 // 	byte rec[data_size];
 // 	if(ch==1){ // For LIN1 or LINBusSerialOne
@@ -218,6 +292,17 @@ int lin_stack::read(byte data[], byte data_size, boolean all_data = false, boole
 // 	}
 // 	return 0;
 // }
+// 			}
+// 			return 1;
+// 		}
+// 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
+// 		if(LINBusSerialTwo.read() != -1){ // Check if there is an event on LIN bus
+// 			LINBusSerialTwo.readBytes(data,data_size);
+// 			return 1;
+// 		}
+// 	}
+// 	return 0;
+// }
 
 
 // PRIVATE METHODS
@@ -225,7 +310,7 @@ int lin_stack::serial_pause(int no_bits){
 	// Calculate delay needed for 13 bits, depends on bound rate
 	//baud rate is bits per second so we need to determine how many ms needed for 13 bits
 	// 1000000 milliseconds/ boud_rate gives us bits per millisecond
-	unsigned int time_in_micro_sec =(1000000/bound_rate)*no_bits;
+	unsigned long time_in_micro_sec =(1000000/bound_rate)*no_bits;
 	if (time_in_micro_sec > 16383) {
 		return -1;
 	}
@@ -273,17 +358,20 @@ boolean lin_stack::validateParity(byte ident) {
 		return false;
 }
 
-boolean lin_stack::validateChecksum(unsigned char data[], byte data_size){
+boolean lin_stack::validateChecksum( int data[], byte data_size){
 	byte checksum = data[data_size-1];
 	byte suma = 0;
-	for(int i=2;i<data_size-1;i++) 
-		suma = suma + data[i];
+	for(int i=2;i<data_size-1;i++)
+		if (data[i] > 0) {
+			suma = suma + data[i];
+		} 
 	byte v_checksum = 255 - suma - 1;
 	if(checksum==v_checksum)
 		return true;
 	else
 		return false;
 } 
+
 
 // int lin_stack::busWakeUp()
 // {

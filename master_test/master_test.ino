@@ -11,15 +11,16 @@ void setup() {
 //0x85 0x11 0x255 0x255 checksum
 void loop() {
   // Create Data Package
-  byte packageON[] = {255, 255}; // LEDs ON
-  LIN1.write(0x11, packageON, 2);
-  delay(5000);
-  byte packageOFF[] = {0, 0}; // LEDs OFF
+  byte packageON[] = {255, 255}; // LEDs ON 85, 17, 255, 255, 1, ==613
+   LIN1.write(0x11, packageON, 2);
+  delay(10);
+  byte packageOFF[] = {0, 0}; // LEDs OFF 85, 17, 0, 0, 255,  ==357 
+
   LIN1.write(0x11, packageOFF, 2);
-  delay(5000);
-  byte packagecombo[]= {255,255,33,85,0x11,255,254}; // LEDs ON
+  delay(10);
+  byte packagecombo[]= {255,255,33,85,0x11,255,254}; //  85, 17, 255, 254, 125 = 736  85, 17, 255, 255, 33 = 645
   LIN1.write(0x11, packagecombo, 7);
-  delay(5000);
+  delay(10);
 }
 
 //PURE TEST -- uncomment below

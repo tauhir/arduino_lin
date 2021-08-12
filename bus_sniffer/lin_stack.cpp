@@ -78,64 +78,6 @@ int lin_stack::write(byte ident, byte data[], byte data_size){
 	}
 	//sleep(0); // Go to Sleep mode
 	return 1;
-}int lin_stack::write(byte ident, byte data[], byte data_size){
-	// Calculate checksum
-	byte suma = 0;
-	for(int i=0;i<data_size;i++) 
-		suma = suma + data[i];
-	//suma = suma + 1;
-	byte checksum = 255 - suma;
-	// Start interface
-	//sleep(1); // Go to Normal mode
-	// Synch Break
-	//serial_pause(13);
-	// Send data via Serial interface
-	if(ch==1){ // For LIN1 or LINBusSerialOne
-		LINBusSerialOne.begin(bound_rate); // config Serial
-		LINBusSerialOne.write(0x55); // write Synch Byte to serial
-		LINBusSerialOne.write(ident); // write Identification Byte to serial
-		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]); // write data to serial
-		LINBusSerialOne.write(checksum); // write Checksum Byte to serial
-		LINBusSerialOne.end(); // clear Serial config
-	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-		LINBusSerialTwo.begin(bound_rate); // config Serial
-		LINBusSerialTwo.write(0x55); // write Synch Byte to serial
-		LINBusSerialTwo.write(ident); // write Identification Byte to serialv
-		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]); // write data to serial
-		LINBusSerialTwo.write(checksum);// write Checksum Byte to serial
-		LINBusSerialTwo.end(); // clear Serial config
-	}
-	//sleep(0); // Go to Sleep mode
-	return 1;
-}int lin_stack::write(byte ident, byte data[], byte data_size){
-	// Calculate checksum
-	byte suma = 0;
-	for(int i=0;i<data_size;i++) 
-		suma = suma + data[i];
-	//suma = suma + 1;
-	byte checksum = 255 - suma;
-	// Start interface
-	//sleep(1); // Go to Normal mode
-	// Synch Break
-	//serial_pause(13);
-	// Send data via Serial interface
-	if(ch==1){ // For LIN1 or LINBusSerialOne
-		LINBusSerialOne.begin(bound_rate); // config Serial
-		LINBusSerialOne.write(0x55); // write Synch Byte to serial
-		LINBusSerialOne.write(ident); // write Identification Byte to serial
-		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]); // write data to serial
-		LINBusSerialOne.write(checksum); // write Checksum Byte to serial
-		LINBusSerialOne.end(); // clear Serial config
-	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-		LINBusSerialTwo.begin(bound_rate); // config Serial
-		LINBusSerialTwo.write(0x55); // write Synch Byte to serial
-		LINBusSerialTwo.write(ident); // write Identification Byte to serialv
-		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]); // write data to serial
-		LINBusSerialTwo.write(checksum);// write Checksum Byte to serial
-		LINBusSerialTwo.end(); // clear Serial config
-	}
-	//sleep(0); // Go to Sleep mode
-	return 1;
 }
 
 int lin_stack::writeForced( byte data[], byte data_size){
@@ -259,7 +201,6 @@ int lin_stack::read(int data[], int data_size, boolean all_data = true, boolean 
 			}
 			else if (peek == 85) {
 				//instead of getting data from the serial buffer, write a negative value 
-				Serial.println("sync found twice");
 				counter = total_bytes;
 			}
 			else {
@@ -288,7 +229,8 @@ int lin_stack::read(int data[], int data_size, boolean all_data = true, boolean 
 	// check if id is valid
 	// validate checksum 
 	h = " ";
-    delay(10); //not sure why this is needed but code didn't work without serial.prints. Used milli to determine time spent in delay
+    delay(15); //seems like i need to wait for the buffer to fill:
+				// at 9200bps, thats 0.1ms per bit. LIN message has 101 bits max with 40% waiting time (at the very max) ~ 15ms for a LIN message and delay from slave
 
 	if (rec[0] != 85) {
 		//first byte isn't sync byte - BAD DATA
@@ -305,12 +247,10 @@ int lin_stack::read(int data[], int data_size, boolean all_data = true, boolean 
 		}
 	}
 	if (all_data == true) {
-		data = rec;
+		//maybe work with data the whole time and save some time
 		for(int i=0; i <11;i++){
-			Serial.print(rec[i]);
-			Serial.print(", ");
+			data[i]=rec[i];
 			}
-		Serial.println("Done");
 		return 1;
 	}
 	else { 

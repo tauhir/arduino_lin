@@ -29,6 +29,7 @@ class lin_stack
 		int tx_two = 13;
 		// Writing data to bus
 		int write(byte add, byte data[], byte data_size); // write whole package
+		int writeForced( byte data[], byte data_size);
 		int writeRequest(byte add); // Write header only
 		int writeResponse(byte data[], byte data_size); // Write response only
 		int writeStream(byte data[], byte data_size); // Writing user data to LIN bus
@@ -39,7 +40,7 @@ class lin_stack
 	
 	// Private methods and variables
 	private:
-		const unsigned long bound_rate = 19200; // 10417 is best for LIN Interface, most device should work
+		const unsigned long bound_rate = 9600; // 10417 is best for LIN Interface, most device should work
 		const unsigned int period = 52; // in microseconds, 1s/10417
 		byte ch = 0; // which channel should be used
 		byte identByte; // user defined Identification Byte
