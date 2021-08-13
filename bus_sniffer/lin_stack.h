@@ -19,8 +19,8 @@ class lin_stack
 {
 	public:
 		// Constructors
-		lin_stack(byte Ch); // Constructor for Master Node
-		lin_stack(byte Ch, byte ident); // Constructor for Slave Node
+		lin_stack(byte Ch,int baud); // Constructor for Master Node
+		lin_stack(byte Ch, byte ident,int baud); // Constructor for Slave Node
 		
 		// Methods
 		int rx_one = 10;
@@ -33,15 +33,18 @@ class lin_stack
 		int writeRequest(byte add); // Write header only
 		int writeResponse(byte data[], byte data_size); // Write response only
 		int writeStream(byte data[], byte data_size); // Writing user data to LIN bus
-		int read(int data[], int data_size,boolean all_data, boolean id_specific); // read data from LIN bus, checksum and ident validation
-		int readStream(byte data[],byte data_size); // read data from LIN bus
+		int read(int data[], int data_size,boolean all_data, boolean id_specific, boolean slave); // read data from LIN bus, checksum and ident validation
 		int setSerial(); // set up Seril communication for receiving data.
 		int busWakeUp(); // send wakeup frame for waking up all bus participants
+		int slavelisten(); //listens for ident and returns a int to action accordingly
+		int sniffBus(int data[], boolean all_data, boolean id_specific); //sniffs entire LIN BUS
+		int sniffSlave();
 	
 	// Private methods and variables
 	private:
-		const unsigned long bound_rate = 9600; // 10417 is best for LIN Interface, most device should work
+		unsigned int baud_rate; // 10417 is best for LIN Interface, most device should work
 		const unsigned int period = 52; // in microseconds, 1s/10417
+		unsigned long buffer_delay;
 		byte ch = 0; // which channel should be used
 		byte identByte; // user defined Identification Byte
 		int sleep(byte sleep_state); // method for controlling transceiver modes (0 - sleep, 1 - normal)

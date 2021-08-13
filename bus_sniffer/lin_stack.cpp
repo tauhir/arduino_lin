@@ -35,12 +35,18 @@
 SoftwareSerial LINBusSerialOne(10,11);
 SoftwareSerial LINBusSerialTwo(12,13);
 
-lin_stack::lin_stack(byte Ch){
+lin_stack::lin_stack(byte Ch, int baud=9600){
+	baud_rate = baud;
 	sleep_config(Ch); // Configurating Sleep pin for transceiver
+	identByte = 0;
 	ch = Ch;
+	buffer_delay = 18; // TODO manually calculated value below.. it doesn't work when I calculate it for some odd reason so this needs to be set if baud not 9600
+	//buffer_delay = round(140*(1000/baud)); // at 9200bps, thats 0.1ms per bit. LIN message has 101 bits max with 40% waiting time (at the very max) ~ 15ms for a LIN message and delay from slave
+	//Serial.println(buffer_delay);
 }
 
-lin_stack::lin_stack(byte Ch, byte ident){
+lin_stack::lin_stack(byte Ch, byte ident, int baud=9600){
+	baud_rate = baud;
 	sleep_config(Ch); // Configuration of Sleep pin for transceiver
 	identByte = ident; // saving idet to private variable
 	sleep(1); // Transceiver is always in Normal Mode
@@ -62,14 +68,14 @@ int lin_stack::write(byte ident, byte data[], byte data_size){
 	//serial_pause(13);
 	// Send data via Serial interface
 	if(ch==1){ // For LIN1 or LINBusSerialOne
-		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.begin(baud_rate); // config Serial
 		LINBusSerialOne.write(0x55); // write Synch Byte to serial
 		LINBusSerialOne.write(ident); // write Identification Byte to serial
 		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]); // write data to serial
 		LINBusSerialOne.write(checksum); // write Checksum Byte to serial
 		LINBusSerialOne.end(); // clear Serial config
 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.begin(baud_rate); // config Serial
 		LINBusSerialTwo.write(0x55); // write Synch Byte to serial
 		LINBusSerialTwo.write(ident); // write Identification Byte to serialv
 		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]); // write data to serial
@@ -83,11 +89,11 @@ int lin_stack::write(byte ident, byte data[], byte data_size){
 int lin_stack::writeForced( byte data[], byte data_size){
 	// need this to emulate a slave 
 	if(ch==1){ // For LIN1 or LINBusSerialOne
-		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.begin(baud_rate); // config Serial
 		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]); // write data to serial
 		LINBusSerialOne.end(); // clear Serial config
 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.begin(baud_rate); // config Serial
 		LINBusSerialTwo.write(data[0]);  // write Identification Byte to serialv
 		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]); // write data to serial
 		LINBusSerialTwo.end(); // clear Serial config
@@ -105,11 +111,11 @@ int lin_stack::writeRequest(byte ident){
 	serial_pause(13);
 	// Send data via Serial interface
 	if(ch==1){ // For LIN1 or LINBusSerialOne
-		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.begin(baud_rate); // config Serial
 		LINBusSerialOne.write(header,2); // write data to serial
 		LINBusSerialOne.end(); // clear Serial config
 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.begin(baud_rate); // config Serial
 		LINBusSerialTwo.write(header,2); // write data to serial
 		LINBusSerialTwo.end(); // clear Serial config
 	}
@@ -127,12 +133,12 @@ int lin_stack::writeResponse(byte data[], byte data_size){
 	sleep(1); // Go to Normal mode
 	// Send data via Serial interface
 	if(ch==1){ // For LIN1 or LINBusSerialOne
-		LINBusSerialOne.begin(bound_rate); // config Serial
+		LINBusSerialOne.begin(baud_rate); // config Serial
 		LINBusSerialOne.write(data, data_size); // write data to serial
 		LINBusSerialOne.write(checksum); // write data to serial
 		LINBusSerialOne.end(); // clear Serial config
 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-		LINBusSerialTwo.begin(bound_rate); // config Serial
+		LINBusSerialTwo.begin(baud_rate); // config Serial
 		LINBusSerialTwo.write(data, data_size); // write data to serial
 		LINBusSerialTwo.write(checksum); // write data to serial
 		LINBusSerialTwo.end(); // clear Serial config
@@ -148,11 +154,11 @@ int lin_stack::writeResponse(byte data[], byte data_size){
 // 	serial_pause(13);
 // 	// Send data via Serial interface
 // 	if(ch==1){ // For LIN1 or LINBusSerialOne
-// 		LINBusSerialOne.begin(bound_rate); // config Serial
+// 		LINBusSerialOne.begin(baud_rate); // config Serial
 // 		for(int i=0;i<data_size;i++) LINBusSerialOne.write(data[i]);
 // 		LINBusSerialOne.end(); // clear Serial config
 // 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-// 		LINBusSerialTwo.begin(bound_rate); // config Serial
+// 		LINBusSerialTwo.begin(baud_rate); // config Serial
 // 		for(int i=0;i<data_size;i++) LINBusSerialTwo.write(data[i]);
 // 		LINBusSerialTwo.end(); // clear Serial config
 // 	}
@@ -161,17 +167,23 @@ int lin_stack::writeResponse(byte data[], byte data_size){
 // }
 
 // READ methods
-// Read LIN traffic and then proces it.
+// Read LIN traffic and then process it.
 int lin_stack::setSerial(){ // Only needed when receiving signals
 	Serial.begin(19200);
 	if(ch==1){ // For LIN1 (Channel 1)
-		LINBusSerialOne.begin(bound_rate); // Configure LINBusSerialOne
+		LINBusSerialOne.begin(baud_rate); // Configure LINBusSerialOne
 	} else if(ch==2){ // For LIN2 (Channel 2)
-		LINBusSerialTwo.begin(bound_rate); // Configure LINBusSerialTwo
+		LINBusSerialTwo.begin(baud_rate); // Configure LINBusSerialTwo
 	}
 }
 
-int lin_stack::read(int data[], int data_size, boolean all_data = true, boolean id_specific = true){
+int lin_stack::read(
+	int data[],
+ 	int data_size,
+	boolean all_data = true,
+	boolean id_specific = true,
+	boolean slave = false
+	){
 	// added all_data to instead of just providing data, send back all values (sync, id, checksum etc)
 	// id_specific when false will read everything and not check parity.
 	// for now, data_size should just be 8
@@ -203,6 +215,19 @@ int lin_stack::read(int data[], int data_size, boolean all_data = true, boolean 
 				//instead of getting data from the serial buffer, write a negative value 
 				counter = total_bytes;
 			}
+			// else if (counter == 1) {
+			// 	if (slave == true){
+			// 		if (identByte == 0) {
+			// 			return -1;
+			// 		}
+			// 		if (peek = identByte){
+			// 			return 2;
+			// 		}
+			// 		else {
+			// 			return 0;
+			// 		}
+			// 	}
+			// }
 			else {
 				rec[counter] = LINBusSerialOne.read();
 				counter++;
@@ -229,8 +254,7 @@ int lin_stack::read(int data[], int data_size, boolean all_data = true, boolean 
 	// check if id is valid
 	// validate checksum 
 	h = " ";
-    delay(15); //seems like i need to wait for the buffer to fill:
-				// at 9200bps, thats 0.1ms per bit. LIN message has 101 bits max with 40% waiting time (at the very max) ~ 15ms for a LIN message and delay from slave
+    delay(buffer_delay); //seems like i need to wait for the buffer to fill
 
 	if (rec[0] != 85) {
 		//first byte isn't sync byte - BAD DATA
@@ -265,52 +289,31 @@ int lin_stack::read(int data[], int data_size, boolean all_data = true, boolean 
 	return 0;
 }
 
-//not going to use this.
-// int lin_stack::readStream(byte data[],byte data_size){
-// 	// how was this different to read?
-// 	byte rec[data_size];
-// 	if(ch==1){ // For LIN1 or LINBusSerialOne
-// 		if(LINBusSerialOne.read() != -1){ // Check if there is an event on LIN bus
-// 			LINBusSerialOne.readBytes(rec,data_size);
-// 			for(int j=0;j<data_size;j++){
-// 				data[j] = rec[j];int lin_stack::readStream(byte data[],byte data_size){
-// 	// how was this different to read?
-// 	byte rec[data_size];
-// 	if(ch==1){ // For LIN1 or LINBusSerialOne
-// 		if(LINBusSerialOne.read() != -1){ // Check if there is an event on LIN bus
-// 			LINBusSerialOne.readBytes(rec,data_size);
-// 			for(int j=0;j<data_size;j++){
-// 				data[j] = rec[j];
-// 			}
-// 			return 1;
-// 		}
-// 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-// 		if(LINBusSerialTwo.read() != -1){ // Check if there is an event on LIN bus
-// 			LINBusSerialTwo.readBytes(data,data_size);
-// 			return 1;
-// 		}
-// 	}
-// 	return 0;
-// }
-// 			}
-// 			return 1;
-// 		}
-// 	}else if(ch==2){ // For LIN2 or LINBusSerialTwo
-// 		if(LINBusSerialTwo.read() != -1){ // Check if there is an event on LIN bus
-// 			LINBusSerialTwo.readBytes(data,data_size);
-// 			return 1;
-// 		}
-// 	}
-// 	return 0;
-// }
-
+int lin_stack::sniffBus(int data[], boolean all_data, boolean id_specific){
+	//listens to everything. 
+	return read(data, 8, all_data, false,false);
+}
+int lin_stack::sniffSlave(){
+	//need to listen for a request
+	int tempData[11];
+	int response = read(tempData, 8, true, true, true);
+	if (response == 2) {
+		return 1;
+	}
+	else if (response == -1) {
+		return response;
+	}
+	else {
+		return 0;
+	}
+}
 
 // PRIVATE METHODS
 int lin_stack::serial_pause(int no_bits){
 	// Calculate delay needed for 13 bits, depends on bound rate
 	//baud rate is bits per second so we need to determine how many ms needed for 13 bits
 	// 1000000 milliseconds/ boud_rate gives us bits per millisecond
-	unsigned long time_in_micro_sec =(1000000/bound_rate)*no_bits;
+	unsigned long time_in_micro_sec =(1000000/baud_rate)*no_bits;
 	if (time_in_micro_sec > 16383) {
 		return -1;
 	}

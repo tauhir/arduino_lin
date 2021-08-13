@@ -1,9 +1,9 @@
-/*  Sniffer/Reader for Lin Netwrok
- *  v2.0
+/*  LIN network Slave 
+ *  
  *
  *  Short description: 
- *  Sends all LIN communication to the serial port
- *  Currently for use with Arduino Mega 2560
+ *  Listens for headers with a specific id
+ *  Currently for use with Arduino Mega 2560/Uno
  *  
  *  Author: Tauhir Edwards
  *  Arduino IDE 1.8.15
@@ -23,11 +23,10 @@
 unsigned int data_size = 8; // length of byte array
 int data[]= {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}; // byte array for received data
 int int_array_size = sizeof(data[0]);
-int checklist[] = {613,357,736,645};
-
+byte id = 0x12;
 
 // Creating LIN Object
-lin_stack LIN1(1,9600); // 1 - channel, ident - Identification Byte
+lin_stack LIN1(1,id,9200); // 1 - channel, ident - Identification Byte
 
 void setup() {
   // Configure Serial communication
@@ -38,8 +37,7 @@ void setup() {
 
 void loop() {
   // Checking LIN Bus periodicly
-  int a = LIN1.sniffBus(data,true,false);
-  //int a = LIN1.read(data, data_size, true, false,false);
+  int a = LIN1.read(data, data_size, true, false);
   if(a == 1){ // If there was an event on LIN Bus, Traffic was detected. Print data to serial monitor
 
     for(int i=0; i <11;i++){
